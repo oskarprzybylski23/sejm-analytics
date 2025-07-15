@@ -7,11 +7,10 @@ import matplotlib.pyplot as plt
 
 
 # %%
+# Load data and nlp model
 df = pd.read_csv('../../data/statements.csv')
+nlp = spacy.load("pl_core_news_sm")
 df.head()
-
-# %%
-df.dtypes
 
 # %%
 df.info(verbose=True)
@@ -24,7 +23,6 @@ dfn.dtypes
 # %%
 # Remove unneeded columns
 dfn = dfn[["unique_id", "speaker_name", "content_text"]]
-
 dfn.head()
 
 # %%
@@ -35,46 +33,9 @@ speaker = dfn.groupby("speaker_name")
 speaker.count().sort_values(by="content_text", ascending=False).head()
 
 # %%
-dfn_row = dfn.iloc[[42]]
-dfn_row
-
-# %%
 # Get text string from selected row
+dfn_row = dfn.iloc[[42]]
 raw_text = dfn_row["content_text"].values[0]
-print(raw_text)
-
-
-# %%
-def generate_word_cloud(text):
-    """
-    Generate a word cloud from text
-    """
-    wordcloud = WordCloud(
-        width=2000,
-        height=1000,
-        background_color='black').generate(str(text))
-    fig = plt.figure(
-        figsize=(40, 30),
-        facecolor='k',
-        edgecolor='k')
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    plt.tight_layout(pad=0)
-    plt.show()
-
-# %%
-
-
-def remove_parentheses(text):
-    """
-    Remove all text in parentheses (including parentheses).
-    Also removes any leading/trailing whitespace that may remain.
-    """
-    cleaned = re.sub(r'\([^)]*\)', '', text)
-    # Remove extra spaces that may result from removal
-    cleaned = re.sub(r'\s+', ' ', cleaned)
-    return cleaned.strip()
-
 
 # %%
 # Clean text with Spacy
@@ -83,7 +44,6 @@ def process_text(text):
     Initial text processing.
     Convert to lowercase, remove text in parentheses and lemmatize.
     """
-    nlp = spacy.load("pl_core_news_sm")
 
     doc = remove_parentheses(text)
 
@@ -105,16 +65,46 @@ def process_text(text):
     return cleaned_text
 
 
+def remove_parentheses(text):
+    """
+    Remove all text in parentheses (including parentheses).
+    Also removes any leading/trailing whitespace that may remain.
+    """
+    cleaned = re.sub(r'\([^)]*\)', '', text)
+    # Remove extra spaces that may result from removal
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    return cleaned.strip()
+
 # %%
-# Compare wordcloud results raw vs cleaned
-cleaned_text = process_text(raw_text)
-generate_word_cloud(raw_text)
-generate_word_cloud(cleaned_text)
+# Generate a word cloud from text
+
+
+def generate_word_cloud(text):
+    """
+    Generate a word cloud from text
+    """
+    wordcloud = WordCloud(
+        width=2000,
+        height=1000,
+        background_color='black').generate(str(text))
+    fig = plt.figure(
+        figsize=(40, 30),
+        facecolor='k',
+        edgecolor='k')
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.tight_layout(pad=0)
+    plt.show()
+
 
 # %%
 # Aggregate all statements from a speaker and generate a wordcloud
-speaker_rows = dfn[dfn["speaker_name"] == "Jarosław Kaczyński"]
+selected_speaker = "Jarosław Kaczyński"
+
+speaker_rows = dfn[dfn["speaker_name"] == selected_speaker]
 all_text = " ".join(speaker_rows["content_text"].dropna().values)
-claned_text_all = process_text(all_text)
+cleaned_text_all = process_text(all_text)
 print(speaker_rows)
-generate_word_cloud(claned_text_all)
+generate_word_cloud(cleaned_text_all)
+
+# %%
